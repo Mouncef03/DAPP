@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+
+  # ─── MongoDB ───────────────────────────────────────
+  mongodb:
+    image: mongo:7.0
+    container_name: horse_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - horse_network
+
+  # ─── Backend ───────────────────────────────────────
+  backend:
+    build: ./backend
+    container_name: horse_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - MONGO_URI=mongodb://mongodb:27017/horse-marketplace
+      - NODE_ENV=development
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - horse_network
+
+  # ─── Frontend (on ajoutera plus tard) ──────────────
+  frontend:
+    build: ./frontend
+    container_name: horse_frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - horse_network
+
+# ─── Volumes ───────────────────────────────────────
+volumes:
+  mongo_data:
+
+# ─── Networks ──────────────────────────────────────
+networks:
+  horse_network:
+    driver: bridge
