@@ -38,57 +38,58 @@ const ListHorse = () => {
   };
 
   // ─── Handle Submit ────────────────────────────────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!account) {
-      toast.error('Please connect your wallet first!');
-      return;
-    }
+  if (!account) {
+    toast.error('Please connect your wallet first!');
+    return;
+  }
 
-    if (!imageFile) {
-      toast.error('Please upload a horse image!');
-      return;
-    }
+  if (!imageFile) {
+    toast.error('Please upload a horse image!');
+    return;
+  }
 
-    try {
-      setIsSubmitting(true);
+  try {
+    setIsSubmitting(true);
 
-      // Step 1: Upload image to IPFS
-      setCurrentStep('Uploading image to IPFS...');
-      const ipfsImage = await uploadImage(imageFile);
+    // Step 1: Upload image to IPFS
+    setCurrentStep('Uploading image to IPFS...');
+    const ipfsImage = await uploadImage(imageFile);
 
-      // Step 2: Upload metadata to IPFS
-      setCurrentStep('Uploading metadata to IPFS...');
-      const ipfsMetadata = await uploadMetadata({
-        name: formData.name,
-        breed: formData.breed,
-        age: formData.age,
-        price: formData.price,
-        description: formData.description,
-        imageUrl: ipfsImage.imageUrl,
-      });
+    // Step 2: Upload metadata to IPFS
+    setCurrentStep('Uploading metadata to IPFS...');
+    const ipfsMetadata = await uploadMetadata({
+      name: formData.name,
+      breed: formData.breed,
+      age: formData.age,
+      price: formData.price,
+      description: formData.description,
+      imageUrl: ipfsImage.imageUrl,
+    });
 
-      // Step 3: Save to blockchain + MongoDB
-      setCurrentStep('Recording on blockchain...');
-      await createHorse({
-        ...formData,
-        owner: account,
-        imageUrl: ipfsImage.imageUrl,
-        ipfsHash: ipfsMetadata.ipfsHash,
-      });
+    // Step 3: Mint NFT on blockchain + Save to MongoDB
+    setCurrentStep('Minting NFT on blockchain... 🐴');
+    await createHorse({
+      ...formData,
+      owner: account,
+      imageUrl: ipfsImage.imageUrl,
+      ipfsHash: ipfsMetadata.ipfsHash,
+      metadataUrl: ipfsMetadata.metadataUrl,
+    });
 
-      toast.success('Horse listed successfully! 🐴');
-      navigate('/marketplace');
+    toast.success('🐴 Horse NFT minted successfully!');
+    navigate('/marketplace');
 
-    } catch (error) {
-      toast.error('Failed to list horse: ' + error.message);
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-      setCurrentStep('');
-    }
-  };
+  } catch (error) {
+    toast.error('Failed to mint NFT: ' + error.message);
+    console.error(error);
+  } finally {
+    setIsSubmitting(false);
+    setCurrentStep('');
+  }
+};
 
   // ─── Redirect if not connected ────────────────────────────
   if (!account) {
@@ -303,7 +304,7 @@ const ListHorse = () => {
               ) : (
                 <>
                   <FaHorse />
-                  <span>List Horse on Blockchain</span>
+                  <span>Mint Horse NFT 🐴</span>
                 </>
               )}
             </motion.button>

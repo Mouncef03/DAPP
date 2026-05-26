@@ -1,7 +1,7 @@
 const Horse = require('../models/Horse');
 const Transaction = require('../models/Transaction');
 const {
-  listHorseOnBlockchain,
+  mintHorseNFT,
   getHorsesForSaleFromBlockchain,
   updateHorsePriceOnBlockchain,
 } = require('../services/blockchainService');
@@ -31,15 +31,15 @@ const getHorseById = async (req, res) => {
   }
 };
 
-// @desc    Create a horse listing (MongoDB + Blockchain)
+// @desc    Create a horse listing + Mint NFT
 // @route   POST /api/horses
 const createHorse = async (req, res) => {
   try {
-    const { name, breed, age, price, description, owner, imageUrl, ipfsHash, tokenId } = req.body;
+    const { name, breed, age, price, description, owner, imageUrl, ipfsHash, metadataUrl } = req.body;
 
-    // 1. Save to blockchain
-    const blockchainResult = await listHorseOnBlockchain(
-      name, breed, age, price, ipfsHash
+    // 1. Mint NFT on blockchain
+    const blockchainResult = await mintHorseNFT(
+      name, breed, age, price, ipfsHash, metadataUrl || ipfsHash
     );
 
     // 2. Save to MongoDB
@@ -52,26 +52,32 @@ const createHorse = async (req, res) => {
       owner,
       imageUrl,
       ipfsHash,
-      tokenId: blockchainResult.horseId || tokenId,
+      tokenId: blockchainResult.tokenId,
       transactionHash: blockchainResult.transactionHash,
     });
 
+    // 3. Record transaction
     await Transaction.create({
-     type: 'list',
-     horseId: horse._id,
-     horseName: horse.name,
-     horseImage: horse.imageUrl,
-     from: owner.toLowerCase(),
-     to: '',
-     price: horse.price,
-     transactionHash: blockchainResult.transactionHash,
-    status: 'confirmed',
-  });
+      type: 'list',
+      horseId: horse._id,
+      horseName: horse.name,
+      horseImage: horse.imageUrl,
+      from: owner.toLowerCase(),
+      to: '',
+      price: horse.price,
+      transactionHash: blockchainResult.transactionHash,
+      status: 'confirmed',
+    });
 
     res.status(201).json({
       success: true,
       data: horse,
       blockchain: blockchainResult,
+      nft: {
+        tokenId: blockchainResult.tokenId,
+        transactionHash: blockchainResult.transactionHash,
+        message: '🐴 Horse NFT minted successfully!',
+      },
     });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -89,12 +95,9 @@ const updateHorse = async (req, res) => {
     if (!horse) {
       return res.status(404).json({ success: false, message: 'Horse not found' });
     }
-
-    // Update price on blockchain if price changed
     if (req.body.price && horse.tokenId) {
       await updateHorsePriceOnBlockchain(horse.tokenId, req.body.price);
     }
-
     res.json({ success: true, data: horse });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -119,7 +122,7 @@ const deleteHorse = async (req, res) => {
   }
 };
 
-// @desc    Get horses by owner wallet address
+// @desc    Get horses by owner wallet
 // @route   GET /api/horses/owner/:walletAddress
 const getHorsesByOwner = async (req, res) => {
   try {
@@ -160,21 +163,22 @@ const buyHorse = async (req, res) => {
       { new: true }
     );
 
-    await Transaction.create({
-  type: 'buy',
-  horseId: horse._id,
-  horseName: horse.name,
-  horseImage: horse.imageUrl,
-  from: horse.owner.toLowerCase(),
-  to: newOwner.toLowerCase(),
-  price: horse.price,
-  transactionHash: transactionHash,
-  status: 'confirmed',
-});
-
     if (!horse) {
       return res.status(404).json({ success: false, message: 'Horse not found' });
     }
+
+    // Record transaction
+    await Transaction.create({
+      type: 'buy',
+      horseId: horse._id,
+      horseName: horse.name,
+      horseImage: horse.imageUrl,
+      from: horse.owner.toLowerCase(),
+      to: newOwner.toLowerCase(),
+      price: horse.price,
+      transactionHash: transactionHash,
+      status: 'confirmed',
+    });
 
     res.json({ success: true, data: horse });
   } catch (error) {

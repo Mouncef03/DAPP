@@ -5,6 +5,8 @@ import { useWeb3 } from '../../context/Web3Context';
 import { getNetworkName } from '../../utils/web3Helper';
 import { FaHorse, FaBars, FaTimes, FaWallet, FaChevronDown, FaList, FaPlus, FaHistory, FaUniversity, FaShieldAlt } from 'react-icons/fa';
 import Notifications from '../ui/Notifications';
+import { FaGavel } from 'react-icons/fa';
+import { FaChartLine } from 'react-icons/fa';
 
 const Navbar = () => {
   const { account, balance, chainId, connectWallet, disconnectWallet, formatAddress, isConnecting } = useWeb3();
@@ -38,9 +40,26 @@ const Navbar = () => {
             </Link>
 
             {/* Marketplace */}
-            <Link to="/marketplace" className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive('/marketplace') ? 'bg-amber-400 text-gray-900' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}>
-              Marketplace
-            </Link>
+             <Link to="/marketplace" className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive('/marketplace') ? 'bg-amber-400 text-gray-900' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}>
+  Marketplace
+</Link>
+
+<Link to="/auctions" className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 ${isActive('/auctions') ? 'bg-amber-400 text-gray-900' : 'text-gray-300 hover:text-white hover:bg-gray-800'}`}>
+  <FaGavel size={12} />
+  <span>Auctions</span>
+</Link>
+
+<Link
+  to="/dashboard"
+  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-1 ${
+    isActive('/dashboard')
+      ? 'bg-amber-400 text-gray-900'
+      : 'text-gray-300 hover:text-white hover:bg-gray-800'
+  }`}
+>
+  <FaChartLine size={12} />
+  <span>Analytics</span>
+</Link>
 
             {/* My Horses Dropdown */}
             <div className="relative" onMouseEnter={() => setIsDropdownOpen(true)} onMouseLeave={() => setIsDropdownOpen(false)}>

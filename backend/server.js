@@ -7,7 +7,9 @@ const ipfsRoutes = require('./routes/ipfsRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const bankOrderRoutes = require('./routes/bankOrderRoutes');
+const auctionRoutes = require('./routes/auctionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 dotenv.config();
@@ -31,7 +33,9 @@ app.use('/api/ipfs', ipfsRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/bankorders', bankOrderRoutes);
+app.use('/api/auctions', auctionRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 
 // Error Handler

@@ -50,7 +50,7 @@ const HorseCard = ({ horse }) => {
           {tokenId && (
             <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center space-x-1">
               <MdVerified size={12} />
-              <span>#{tokenId}</span>
+              <span>NFT #{tokenId}</span>
             </span>
           )}
         </div>

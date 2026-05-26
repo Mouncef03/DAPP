@@ -8,6 +8,7 @@ import { formatAddress } from '../utils/web3Helper';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import api from '../utils/api';
 import { QRCodeSVG } from 'qrcode.react';
+import StartAuctionButton from '../components/ui/StartAuctionButton';
 import toast from 'react-hot-toast';
 
 const HorseDetail = () => {
@@ -159,6 +160,26 @@ const handleVerifyDocument = async (docId) => {
     }
   };
 
+    const handleToggleSale = async () => {
+  if (!account) { toast.error('Connect your wallet!'); return; }
+  try {
+    const newPrice = selectedHorse.isForSale ? selectedHorse.price : prompt('Enter new price in ETH:');
+    if (!selectedHorse.isForSale && (!newPrice || isNaN(newPrice))) {
+      toast.error('Enter a valid price!');
+      return;
+    }
+    toast.loading('Updating sale status...', { id: 'toggle' });
+    await api.put(`/horses/${selectedHorse._id}/toggle-sale`, {
+      owner: account,
+      price: parseFloat(newPrice),
+    });
+    toast.success(selectedHorse.isForSale ? 'Horse removed from sale!' : 'Horse listed for sale! 🐴', { id: 'toggle' });
+    fetchHorseById(id);
+  } catch (error) {
+    toast.error('Failed: ' + error.message, { id: 'toggle' });
+  }
+};
+
   if (isLoading) { return <LoadingSpinner message="Loading horse details..." />; }
 
   if (!selectedHorse) {
@@ -303,8 +324,25 @@ const handleVerifyDocument = async (docId) => {
   </div>
 )}
             {isOwner && (
-              <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-center">
-                <p className="text-gray-400 text-sm">You own this horse</p>
+              <div className="space-y-3">
+                <div className="bg-gray-800 border border-gray-700 rounded-xl p-4 text-center">
+                  <p className="text-gray-400 text-sm">🐴 You own this horse</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleToggleSale}
+                  className={`w-full font-black py-4 rounded-xl text-lg flex items-center justify-center space-x-3 transition-all ${selectedHorse.isForSale ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                >
+                  {selectedHorse.isForSale ? (
+                    <span className="flex items-center space-x-2"><span>❌</span><span>Remove from Sale</span></span>
+                  ) : (
+                    <span className="flex items-center space-x-2"><span>✅</span><span>Put on Sale</span></span>
+                  )}
+                </motion.button>
+                {!selectedHorse.isForSale && (
+                  <StartAuctionButton horseId={selectedHorse._id} tokenId={selectedHorse.tokenId} account={account} contract={contract} onSuccess={() => navigate('/auctions')} />
+                )}
               </div>
             )}
             {!account && selectedHorse.isForSale && (

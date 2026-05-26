@@ -1,0 +1,22 @@
+Systeme d'enchers 
+
+Vendeur active les enchères sur son cheval
+        ↓
+Acheteurs font des offres en ETH
+        ↓
+Chaque nouvelle offre doit être > offre précédente
+        ↓
+Vendeur accepte la meilleure offre
+        ↓
+Transaction automatique sur blockchain
+        ↓
+Cheval transféré au gagnant  
+
+ 
+ANALYTICS
+📈 Graphique des ventes par jour/semaine/mois
+💰 Volume total des transactions en ETH
+🐴 Nombre de chevaux listés/vendus
+🏆 Top vendeurs et acheteurs
+🌍 Répartition ETH vs Virement bancaire
+⚡ Activité récente en temps réel 

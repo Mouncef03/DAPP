@@ -13,7 +13,10 @@ import HorseDetail from './pages/HorseDetail';
 import TransactionHistory from './pages/TransactionHistory';
 import BankCheckout from './pages/BankCheckout';
 import Orders from './pages/Orders';
+import Auctions from './pages/Auctions';
+import AuctionDetail from './pages/AuctionDetail';
 import VerifyDocument from './pages/VerifyDocument';
+import Dashboard from './pages/Dashboard';
 import './index.css';
 
 function App() {
@@ -44,6 +47,9 @@ function App() {
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/horse/:id" element={<HorseDetail />} />
                 <Route path="/verify" element={<VerifyDocument />} />
+                <Route path="/auctions" element={<Auctions />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/auction/:id" element={<AuctionDetail />} />
               </Routes>
             </main>
             <Footer />

@@ -39,20 +39,24 @@ const Notifications = () => {
     }
   };
 
-  const handleNotificationClick = async (notification) => {
-    try {
-      await api.put(`/notifications/${notification._id}/read`);
-      fetchNotifications();
-      setIsOpen(false);
-      if (notification.type === 'payment_sent') {
+const handleNotificationClick = async (notification) => {
+  try {
+    await api.put(`/notifications/${notification._id}/read`);
+    fetchNotifications();
+    setIsOpen(false);
+    if (notification.type === 'payment_sent') {
+      if (notification.message.includes('bid') || notification.message.includes('ETH on')) {
+        navigate('/auctions');
+      } else {
         navigate('/orders');
-      } else if (notification.type === 'order_confirmed') {
-        navigate('/my-horses');
       }
-    } catch (error) {
-      console.error(error);
+    } else if (notification.type === 'order_confirmed') {
+      navigate('/my-horses');
     }
-  };
+  } catch (error) {
+    console.error(error);
+  }
+};
 
   const getNotificationIcon = (type) => {
     if (type === 'payment_sent') return <FaUniversity className="text-blue-400" />;

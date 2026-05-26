@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
 
-  # ─── MongoDB ───────────────────────────────────────
+  # ─── MongoDB ───────────────────────────────────────────
   mongodb:
     image: mongo:7.0
     container_name: horse_mongodb
@@ -14,7 +14,22 @@ services:
     networks:
       - horse_network
 
-  # ─── Backend ───────────────────────────────────────
+  # ─── Blockchain (Hardhat Node) ─────────────────────────
+  blockchain:
+    build: ./blockchain
+    container_name: horse_blockchain
+    restart: always
+    ports:
+      - "8545:8545"
+    networks:
+      - horse_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8545"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Backend ───────────────────────────────────────────
   backend:
     build: ./backend
     container_name: horse_backend
@@ -25,21 +40,32 @@ services:
       - PORT=5000
       - MONGO_URI=mongodb://mongodb:27017/horse-marketplace
       - NODE_ENV=development
+      - BLOCKCHAIN_RPC_URL=http://blockchain:8545
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - PINATA_API_KEY=${PINATA_API_KEY}
+      - PINATA_API_SECRET=${PINATA_API_SECRET}
+      - PINATA_JWT=${PINATA_JWT}
     depends_on:
       - mongodb
+      - blockchain
     volumes:
       - ./backend:/app
       - /app/node_modules
     networks:
       - horse_network
 
-  # ─── Frontend (on ajoutera plus tard) ──────────────
+  # ─── Frontend ──────────────────────────────────────────
   frontend:
     build: ./frontend
     container_name: horse_frontend
     restart: always
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+      - REACT_APP_CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - REACT_APP_CHAIN_ID=31337
     depends_on:
       - backend
     volumes:
@@ -48,11 +74,11 @@ services:
     networks:
       - horse_network
 
-# ─── Volumes ───────────────────────────────────────
+# ─── Volumes ───────────────────────────────────────────
 volumes:
   mongo_data:
 
-# ─── Networks ──────────────────────────────────────
+# ─── Networks ──────────────────────────────────────────
 networks:
   horse_network:
     driver: bridge

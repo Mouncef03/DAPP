@@ -1,77 +1,75 @@
 const { ethers } = require('ethers');
-const HorseMarketplaceABI = require('../config/abi/HorseMarketplace.json');
+const HorseNFTABI = require('../config/abi/HorseMarketplace.json');
 require('dotenv').config();
 
-// ─── Setup Provider and Contract ─────────────────────────────
 const getContract = () => {
   try {
     const provider = new ethers.JsonRpcProvider(
       process.env.BLOCKCHAIN_RPC_URL || 'http://127.0.0.1:8545'
     );
-
     const privateKey = process.env.PRIVATE_KEY;
     const wallet = new ethers.Wallet(privateKey, provider);
-
     const contract = new ethers.Contract(
       process.env.CONTRACT_ADDRESS,
-      HorseMarketplaceABI.abi,
+      HorseNFTABI.abi,
       wallet
     );
-
     return { contract, provider, wallet };
   } catch (error) {
     throw new Error(`Blockchain connection failed: ${error.message}`);
   }
 };
 
-// ─── List Horse on Blockchain ────────────────────────────────
-const listHorseOnBlockchain = async (name, breed, age, price, ipfsHash) => {
+// ─── Mint Horse NFT ───────────────────────────────────────
+const mintHorseNFT = async (name, breed, age, price, ipfsHash, metadataUrl) => {
   try {
     const { contract } = getContract();
-
-    // Convert price from ETH to Wei
     const priceInWei = ethers.parseEther(price.toString());
 
-    const tx = await contract.listHorse(name, breed, age, priceInWei, ipfsHash);
-    console.log('⏳ Transaction sent:', tx.hash);
+    const tx = await contract.mintHorse(
+      name,
+      breed,
+      age,
+      priceInWei,
+      ipfsHash,
+      metadataUrl
+    );
 
+    console.log('⏳ Minting NFT transaction sent:', tx.hash);
     const receipt = await tx.wait();
-    console.log('✅ Transaction confirmed:', receipt.hash);
+    console.log('✅ NFT Minted! Transaction:', receipt.hash);
 
-    // Get horse ID from event
-    const event = receipt.logs.find(log => {
+    // Get tokenId from HorseMinted event
+    let tokenId = null;
+    for (const log of receipt.logs) {
       try {
         const parsed = contract.interface.parseLog(log);
-        return parsed.name === 'HorseListed';
-      } catch {
-        return false;
-      }
-    });
-
-    let horseId = null;
-    if (event) {
-      const parsed = contract.interface.parseLog(event);
-      horseId = parsed.args.id.toString();
+        if (parsed.name === 'HorseMinted') {
+          tokenId = parsed.args.tokenId.toString();
+          break;
+        }
+      } catch { continue; }
     }
 
     return {
       success: true,
       transactionHash: receipt.hash,
-      horseId,
+      tokenId,
     };
   } catch (error) {
-    throw new Error(`Failed to list horse: ${error.message}`);
+    throw new Error(`Failed to mint NFT: ${error.message}`);
   }
 };
 
-// ─── Get Horse from Blockchain ────────────────────────────────
-const getHorseFromBlockchain = async (horseId) => {
+// ─── Get Horse from Blockchain ────────────────────────────
+const getHorseFromBlockchain = async (tokenId) => {
   try {
     const { contract } = getContract();
-    const horse = await contract.horses(horseId);
+    const horse = await contract.horses(tokenId);
+    const tokenURI = await contract.tokenURI(tokenId);
 
     return {
-      id: horse.id.toString(),
+      tokenId: horse.tokenId.toString(),
       name: horse.name,
       breed: horse.breed,
       age: horse.age.toString(),
@@ -79,20 +77,21 @@ const getHorseFromBlockchain = async (horseId) => {
       ipfsHash: horse.ipfsHash,
       owner: horse.owner,
       isForSale: horse.isForSale,
+      tokenURI,
     };
   } catch (error) {
     throw new Error(`Failed to get horse: ${error.message}`);
   }
 };
 
-// ─── Get All Horses For Sale ──────────────────────────────────
+// ─── Get All Horses For Sale ──────────────────────────────
 const getHorsesForSaleFromBlockchain = async () => {
   try {
     const { contract } = getContract();
     const horses = await contract.getHorsesForSale();
 
     return horses.map(horse => ({
-      id: horse.id.toString(),
+      tokenId: horse.tokenId.toString(),
       name: horse.name,
       breed: horse.breed,
       age: horse.age.toString(),
@@ -106,26 +105,21 @@ const getHorsesForSaleFromBlockchain = async () => {
   }
 };
 
-// ─── Update Horse Price ───────────────────────────────────────
-const updateHorsePriceOnBlockchain = async (horseId, newPrice) => {
+// ─── Update Horse Price ───────────────────────────────────
+const updateHorsePriceOnBlockchain = async (tokenId, newPrice) => {
   try {
     const { contract } = getContract();
     const priceInWei = ethers.parseEther(newPrice.toString());
-
-    const tx = await contract.updatePrice(horseId, priceInWei);
+    const tx = await contract.updatePrice(tokenId, priceInWei);
     const receipt = await tx.wait();
-
-    return {
-      success: true,
-      transactionHash: receipt.hash,
-    };
+    return { success: true, transactionHash: receipt.hash };
   } catch (error) {
     throw new Error(`Failed to update price: ${error.message}`);
   }
 };
 
 module.exports = {
-  listHorseOnBlockchain,
+  mintHorseNFT,
   getHorseFromBlockchain,
   getHorsesForSaleFromBlockchain,
   updateHorsePriceOnBlockchain,

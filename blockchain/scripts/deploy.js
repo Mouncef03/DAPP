@@ -1,35 +1,35 @@
 const hre = require("hardhat");
+const fs = require("fs");
 
 async function main() {
-  console.log("🚀 Deploying HorseMarketplace contract...");
+  console.log("🚀 Deploying HorseNFT contract...");
 
-  // Get the deployer account
   const [deployer] = await hre.ethers.getSigners();
   console.log("📝 Deploying with account:", deployer.address);
 
-  // Get deployer balance
   const balance = await hre.ethers.provider.getBalance(deployer.address);
   console.log("💰 Account balance:", hre.ethers.formatEther(balance), "ETH");
 
-  // Deploy the contract
-  const HorseMarketplace = await hre.ethers.getContractFactory("HorseMarketplace");
-  const horseMarketplace = await HorseMarketplace.deploy();
+  // Deploy HorseNFT
+  const HorseNFT = await hre.ethers.getContractFactory("HorseNFT");
+  const horseNFT = await HorseNFT.deploy();
+  await horseNFT.waitForDeployment();
 
-  // Wait for deployment
-  await horseMarketplace.waitForDeployment();
-
-  const contractAddress = await horseMarketplace.getAddress();
-
-  console.log("✅ HorseMarketplace deployed to:", contractAddress);
+  const contractAddress = await horseNFT.getAddress();
+  console.log("✅ HorseNFT deployed to:", contractAddress);
   console.log("🔗 Network:", hre.network.name);
+  console.log("🐴 NFT Name: HorseChain");
+  console.log("🎫 NFT Symbol: HORSE");
 
-  // Save contract address to a file
-  const fs = require("fs");
+  // Save contract info
   const contractInfo = {
     address: contractAddress,
     network: hre.network.name,
     deployer: deployer.address,
     deployedAt: new Date().toISOString(),
+    contractName: "HorseNFT",
+    nftName: "HorseChain",
+    nftSymbol: "HORSE",
   };
 
   fs.writeFileSync(
